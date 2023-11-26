@@ -1,8 +1,9 @@
 import random
 
 class Bingo:
-    def _init_(self):
+    def __init__(self):
         self.inicio()
+        self.verificarBingo()
 
     def inicio(self): # Menu principal 
 
@@ -16,8 +17,9 @@ class Bingo:
             opciones.get(opcion, self.default)() # si la opcion no esta en el diccionario, se ejecuta default
 
     def configurador(self): # Configurador de juego
-        self.numJugadores=(int(input("Digite numero de jugadores: "))) # se pide el numero de jugadores
+        self.numJugadores=(int(input("Digite numero de jugadores: ")))
         self.nombres=[] # lista de nombres de jugadores
+        self.bingo = [] # lista de cartones
         for i in range(self.numJugadores): # se pide el nombre de cada jugador
             nombre=(input(f"Ingrese el nombre del jugador {i+1}: ")) 
             self.nombres.append(nombre) 
@@ -27,18 +29,18 @@ class Bingo:
         for i in range(self.numJugadores): # se generan los cartones de cada jugador
             print(" "+self.nombres[i]) # se imprime el nombre del jugador
             print(" B   I   N   G   O ") # se imprime el titulo del carton
-            self.bingo = [] # lista de cartones
+            carton = [] # lista del carton para el jugador actual
             for f in range(5): # se generan los numeros de cada carton
                 fila = random.sample(range(f * 15 + 1, (f + 1) * 15 + 1), 5) # se generan los numeros de cada fila
-                self.bingo.append(fila) # se agregan los numeros a la lista de cartones
-            self.mostrarCartones() # se llama a la funcion mostrarCartones
+                carton.append(fila) # se agregan los numeros al carton del jugador actual
+            self.bingo.append(carton) # se agrega el carton a la lista de cartones
+            self.mostrarCartones(i) # se llama a la funcion mostrarCartones
 
-    def mostrarCartones(self): 
+    def mostrarCartones(self, i): 
         for f in range(5): 
             for c in range(5): 
-                print(f"{self.bingo[c][f]:2}", end="  ") # se imprimen los numeros de cada carton
+                print(f"{self.bingo[i][c][f]:2}", end="  ") # se imprimen los numeros de cada carton
             print()
-            
 
     def jugar(self): 
         forma=-1 # para que entre al while
@@ -59,17 +61,9 @@ class Bingo:
             formas.get(forma, self.default)() # si la opcion no esta en el diccionario, se ejecuta default
 
     def todo(self):
-        # llenar todo el carton, no importa el orden, si el número está en el cartón se marca (cambia de color)
-        # se genera un numero aleatorio
-        # se busca el numero en el carton
-        # si se encuentra, se marca
-        # si no se encuentra, se genera otro numero aleatorio
-        # se repite hasta que se encuentren todos los numeros del carton
-        # se repite para todos los cartones
-        # se repite para todos los jugadores
-        # se repite hasta que alguien cante bingo
-        letra = random.choice("BINGO")
         
+        letra = random.choice("BINGO")
+    
         if (letra=="B"):
             num=random.randint(1,15)
         if(letra=="I"):
@@ -80,32 +74,56 @@ class Bingo:
             num=random.randint(46,60)
         if(letra=="O"):
             num=random.randint(61,75)
-            
-        print(f"Balota: {letra}-{num}")
-        
-        for f in range(5):
-            fila=[]
-            for c in range(5):
-                if(self.bingo[c][f]==num):
-                    fila.append("X")
-                else:
-                    fila.append(self.bingo[c][f])
-            print(fila)
 
+        print(f"Balota: {letra}-{num}")
+
+
+        
+        for i in range(self.numJugadores):
+            for f in range(5):
+                fila=[]
+                for c in range(5):
+                    if(self.bingo[i][f][c]==num):
+                        fila.append("X")
+                    else:
+                        fila.append(self.bingo[i][f][c])
+                self.bingo[i][f] = fila
+                print(fila)
+
+    def verificarTodo(self):
+        for i in range(self.numJugadores):
+            for f in range(5):
+                if all(x == "X" for x in self.bingo[i][f]): # si todos los elementos de la fila son X
+                    print(f"Bingo de {self.nombres[i]}")
+                    self.inicio() # se vuelve al menu principal
+    
     def verificarBingo(self):
+        self.verificarTodo()
+        self.verificarCuadrado()
+        self.verificarLetraL()
+        self.verificarLetraB()
+        self.verificarLetraI()
+        self.verificarLetraN()
+        self.verificarLetraG()
+        self.verificarLetraO()
+
         # Verificar si alguien hizo Bingo en esta forma
         for i in range(self.numJugadores):
             for f in range(5):
                 fila = []
                 for c in range(5):
                     if (f == 1 or f == 3) and (c == 1 or c == 3): # si es una posición del cuadrado
-                        # Marcar el cuadrado
-                        fila.append("X")
-
+                        # Marcar el cuadrado pero en vez de X, el numero cambia de color 
+                        fila.append(self.bingo[i][f][c])
+                    if all(x == "X" for x in fila): # si todos los elementos de la fila son X
+                        print(f"Bingo de {self.nombres[i]}")
+                        self.inicio() # se vuelve al menu principal
+        
+                        
     def cuadrado(self):
         # Se genera un número aleatorio para marcar en el cuadrado
-        num = random.randint(1, 75) 
-        print(f"Balota: {num}") 
+        num = random.randint(1, 75)
+        print(f"Balota: {num}")  
 
         # Marcar el cuadrado en cada cartón
         for i in range(self.numJugadores): 
@@ -113,15 +131,24 @@ class Bingo:
             for f in range(5): 
                 fila = [] 
                 for c in range(5): 
-                    if (f == 1 or f == 3) and (c == 1 or c == 3): # si es una posición del cuadrado
+                    if self.bingo[i][f][c] == num: 
+                        fila.append("X")
+                    elif (f == 1 or f == 3) and (c == 1 or c == 3): # si es una posición del cuadrado
                         # Marcar el cuadrado
                         fila.append("X") 
                     else:
-                        fila.append(self.bingo[i][c][f])
-                print(fila)
+                        fila.append(self.bingo[i][f][c])
+            self.bingo[i][f] = fila
 
         # Verificar si alguien hizo Bingo en esta forma
         self.verificarBingo()
+
+    def verificarCuadrado(self):
+        for i in range(self.numJugadores):
+            cuadrado = [self.bingo[i][f][c] for f in [0, 4] for c in range(5)] + [self.bingo[i][f][c] for f in range(1, 4) for c in [0, 4]]  # Get the outer square
+            if all(x == "X" for x in cuadrado):  # If all elements are "X"
+                print(f"Bingo de {self.nombres[i]} en el cuadrado")
+                self.inicio()  # Return to the main menu
 
     def letraL(self):
         # Se genera un número aleatorio para marcar en el cuadrado
@@ -134,17 +161,34 @@ class Bingo:
             for f in range(5):
                 fila = []
                 for c in range(5):
-                    if (f == 1 or f == 2 or f == 3) and c == 1:
-                        # Marcar la letra L
-                        fila.append("X")
+                    if (f == 0 or f == 1 or f == 2 or f == 3) and c == 0: # Marcar la letra L
+                        if self.bingo[i][f][c] == num:
+                            fila.append("X")
+                        else:
+                            fila.append(self.bingo[i][f][c])
+                    elif f == 4: # Marcar la base de la L
+                        if self.bingo[i][f][c] == num:
+                            fila.append("X")
+                        else:
+                            fila.append(self.bingo[i][f][c])
                     else:
-                        fila.append(self.bingo[i][c][f])
+                        fila.append(self.bingo[i][f][c])
+                self.bingo[i][f] = fila
                 print(fila)
+        
+        # Verificar si alguien hizo Bingo en esta forma
+        self.verificarBingo()
+
+    def verificarLetraL(self):
+        for i in range(self.numJugadores):
+            letraL = [self.bingo[i][f][0] for f in range(5)] + self.bingo[i][4]  # Get the "L" pattern
+            if all(x == "X" for x in letraL):  # If all elements are "X"
+                print(f"Bingo de {self.nombres[i]} en la letra L")
+                self.inicio()  # Return to the main menu
 
     def letraB(self):
-        
-        # Se genera un número aleatorio para marcar en el cuadrado
-        num = random.randint(1, 75)
+        # Se genera un número aleatorio para marcar en la cuadrado
+        num = random.randint(1, 15)
         print(f"Balota: {num}")
 
         # Marcar la letra B en cada cartón
@@ -153,12 +197,27 @@ class Bingo:
             for f in range(5):
                 fila = []
                 for c in range(5):
-                    if (f == 0 or f == 1 or f == 2 or f == 3) and c == 1:
-                        # Marcar la letra B
-                        fila.append("X")
+                    if c == 0: # Marcar la letra B
+                        if self.bingo[i][f][c] == num:
+                            fila.append("X")
+                        else:
+                            fila.append(self.bingo[i][f][c])
                     else:
-                        fila.append(self.bingo[i][c][f])
+                        fila.append(self.bingo[i][f][c])
+                self.bingo[i][f] = fila
                 print(fila)
+
+        # Verificar si alguien hizo Bingo en esta forma
+        self.verificarBingo()
+
+    def verificarLetraB(self):
+        for i in range(self.numJugadores):
+            columnaB = [self.bingo[i][f][0] for f in range(5)]  # Get the first column
+            if all(x == "X" for x in columnaB):  # If all elements are "X"
+                print(f"Bingo de {self.nombres[i]} en la letra B")
+                self.inicio()  # Return to the main menu
+
+    
 
     def letraI(self):
         # Se genera un número aleatorio para marcar en el cuadrado
@@ -171,13 +230,24 @@ class Bingo:
             for f in range(5):
                 fila = []
                 for c in range(5):
-                    if (f == 0 or f == 1 or f == 2 or f == 3) and c == 2:
-                        # Marcar la letra I
-                        fila.append("X")
+                    if c == 2 or f == 0 or f == 4:  # Marcar la letra I
+                        if self.bingo[i][f][c] == num:
+                            fila.append("X")
+                        else:
+                            fila.append(self.bingo[i][f][c])
                     else:
-                        fila.append(self.bingo[i][c][f])
+                        fila.append(self.bingo[i][f][c])
+                self.bingo[i][f] = fila
                 print(fila)
 
+        # Verificar si alguien hizo Bingo en esta forma
+        self.verificarBingo()
+    
+    def verificarLetraI(self):
+        for i in range(self.numJugadores):
+            if all(self.bingo[i][f][2] == "X" for f in range(5)): # if all elements in the middle column are X
+                print(f"Bingo de {self.nombres[i]}")
+                self.inicio() 
 
     def letraN(self):
         # Se genera un número aleatorio para marcar en el cuadrado
@@ -190,12 +260,27 @@ class Bingo:
             for f in range(5):
                 fila = []
                 for c in range(5):
-                    if (f == 0 or f == 1 or f == 2 or f == 3) and c == 3:
-                        # Marcar la letra N
-                        fila.append("X")
+                    if c == 2: # Marcar la letra N
+                        if f == 2: # Marcar la diagonal de la letra N
+                            fila.append(" ")
+                        elif self.bingo[i][f][c] == num:
+                            fila.append("X")
+                        else:
+                            fila.append(self.bingo[i][f][c])
                     else:
-                        fila.append(self.bingo[i][c][f])
+                        fila.append(self.bingo[i][f][c])
+                self.bingo[i][f] = fila
                 print(fila)
+
+        # Verificar si alguien hizo Bingo en esta forma
+        self.verificarBingo()
+    
+    def verificarLetraN(self):
+        for i in range(self.numJugadores):
+            letraN = [self.bingo[i][f][2] for f in [0, 1, 3, 4]]  # Get the "N" pattern
+            if all(x == "X" for x in letraN):  # If all elements are "X"
+                print(f"Bingo de {self.nombres[i]} en la letra N")
+                self.inicio()  # Return to the main menu
 
     def letraG(self):
         # Se genera un número aleatorio para marcar en el cuadrado
@@ -212,26 +297,46 @@ class Bingo:
                         # Marcar la letra G
                         fila.append("X")
                     else:
-                        fila.append(self.bingo[i][c][f])
+                        fila.append(self.bingo[i][f][c])
                 print(fila)
 
+        # Verificar si alguien hizo Bingo en esta forma
+        self.verificarBingo()
+
+    def verificarLetraG(self):
+        for i in range(self.numJugadores):
+            if all(self.bingo[i][f][4] == "X" for f in range(5)): # if all elements in the rightmost column are "X"
+                print(f"Bingo de {self.nombres[i]}")
+                self.inicio() # return to the main menu
+
     def letraO(self):
-        # Se genera un número aleatorio para marcar en el cuadrado
         num = random.randint(1, 75)
         print(f"Balota: {num}")
 
-        # Marcar la letra O en cada cartón
         for i in range(self.numJugadores):
             print(f"\nCartón de {self.nombres[i]}:")
             for f in range(5):
                 fila = []
                 for c in range(5):
-                    if (f == 0 or f == 1 or f == 2 or f == 3) and c == 5:
-                        # Marcar la letra O
-                        fila.append("X")
+                    if (f == 0 or f == 4) and (c == 0 or c == 4):
+                        if self.bingo[i][f][c] == num:
+                            fila.append("X")
+                        else:
+                            fila.append(self.bingo[i][f][c])
                     else:
-                        fila.append(self.bingo[i][c][f])
+                        fila.append(self.bingo[i][f][c])
+                self.bingo[i][f] = fila
                 print(fila)
+
+        # Verificar si alguien hizo Bingo en esta forma
+        self.verificarBingo()
+    
+    def verificarLetraO(self):
+        for i in range(self.numJugadores):
+            letraO = [self.bingo[i][f][c] for f in [0, 4] for c in range(5)] + [self.bingo[i][f][c] for f in range(1, 4) for c in [0, 4]]  # Get the "O" pattern
+            if all(x == "X" for x in letraO):  # Si todos los elementos son "X"
+                print(f"Bingo de {self.nombres[i]} en la letra O")
+                self.inicio()  # Retorna al menu principal
     
     def regresar(self):
         self.inicio()
